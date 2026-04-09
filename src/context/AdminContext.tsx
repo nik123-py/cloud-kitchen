@@ -59,7 +59,8 @@ const DEFAULT_SETTINGS: KitchenSettings = {
   address: "103, A3, Tulip Yellow",
   open_time: "10:00",
   close_time: "19:00",
-  whatsapp_number: "919999999999",
+  // Always prefer the env var so changing VITE_WHATSAPP_NUMBER in .env takes effect
+  whatsapp_number: (import.meta.env.VITE_WHATSAPP_NUMBER as string) || "919999999999",
   qr_code_url: "",
   upi_id: "sonikitchen@upi",
   currency: "₹",
@@ -135,9 +136,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved && saved.date === TODAY() ? saved : null;
   });
 
-  const [settings, setSettings] = useState<KitchenSettings>(() =>
-    loadFromStorage<KitchenSettings>(STORAGE_KEYS.settings, DEFAULT_SETTINGS)
-  );
+  const [settings, setSettings] = useState<KitchenSettings>(() => {
+    const saved = loadFromStorage<KitchenSettings>(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
+    // Always apply current env var for whatsapp_number — overrides stale localStorage value
+    const envNumber = (import.meta.env.VITE_WHATSAPP_NUMBER as string) || "";
+    return envNumber ? { ...saved, whatsapp_number: envNumber } : saved;
+  });
 
   const [visitorStats, setVisitorStats] = useState<VisitorStats>(() =>
     loadFromStorage<VisitorStats>(STORAGE_KEYS.visitor_stats, {
